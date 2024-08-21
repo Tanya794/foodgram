@@ -24,8 +24,8 @@ class LoginUserSerializer(UserSerializer):
 
     class Meta(UserSerializer.Meta):
         model = User
-        fields = UserSerializer.Meta.fields + ['avatar', 'is_subscribed']
+        fields = UserSerializer.Meta.fields + ('avatar', 'is_subscribed')
 
     def to_representation(self, instance):
        # дописать логику проверки подписки
- 
+       pass
