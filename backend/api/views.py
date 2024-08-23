@@ -5,12 +5,12 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
 from rest_framework.response import Response
-from rest_framework.permissions import (IsAuthenticated,
+from rest_framework.permissions import (SAFE_METHODS, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.views import APIView
 
-from api.serializers import (IngredientSerializer, RecipeSerializer,
-                             TagSerializer)
+from api.serializers import (IngredientSerializer, RecipeReadSerializer,
+                             RecipeIWriteSerializer, TagSerializer)
 from recipes.models import Ingredient, Recipe, ShoppingCart, Tag
 from recipes.renderers import PlainTextRenderer
 
@@ -76,7 +76,6 @@ class RedirectToRecipeAPI(APIView):
 
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
-    serializer_class = RecipeSerializer
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
     @action(detail=True, methods=['get'], url_path='get-link')
@@ -85,3 +84,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
         short_link = request.build_absolute_uri(reverse('redirect_to_recipe',
                                                 args=[recipe.short_link]))
         return Response({'short_link': short_link})
+
+    def get_serializer_class(self):
+        if self.request.method in SAFE_METHODS:
+            return RecipeReadSerializer
+        return RecipeIWriteSerializer

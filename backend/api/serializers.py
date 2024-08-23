@@ -57,13 +57,16 @@ class RecipeReadSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = ('id', 'tags', 'ingredients',
-                  'name', 'image', 'text', 'cooking_time')    
+                  'name', 'image', 'text', 'cooking_time')   
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         if instance.image:
-            representation['image'] = self.context[
-                'request'].build_absolute_uri(instance.image.url)
+            if 'request' in self.context:
+                representation['image'] = self.context[
+                    'request'].build_absolute_uri(instance.image.url)
+            else:
+                representation['image'] = instance.image.url
         return representation
 
 
@@ -122,15 +125,11 @@ class RecipeIWriteSerializer(serializers.ModelSerializer):
         ingredients_data = validated_data.pop('ingredients')
         tags_data = validated_data.pop('tags')
 
-        tags_lst = []
-        for tag in tags_data:
-            current_tag, _ = Tag.objects.get(**tag)
-            tags_lst.append(current_tag)
-        instance.tags.set(tags_lst)
+        instance.tags.set(tags_data)
 
         IngredientRecipe.objects.filter(recipe=instance).delete()
         for ingredient in ingredients_data:
-            cur_ingredient = Ingredient.objects.get(id=ingredient['id'])
+            cur_ingredient = ingredient['id']
             IngredientRecipe.objects.create(
                 recipe=instance, ingredient=cur_ingredient,
                 amount=ingredient['amount']
