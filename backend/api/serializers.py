@@ -3,7 +3,7 @@ import base64
 from django.core.files.base import ContentFile
 from rest_framework import serializers
 
-from recipes.models import Ingredient, IngredientRecipe, Recipe, Tag
+from recipes.models import Ingredient, IngredientRecipe, Recipe, Tag, TagRecipe
 
 
 class Base64ImageField(serializers.ImageField):
@@ -33,7 +33,7 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class IngredientRecipeSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(source='ingredint.id', read_only=True)
+    id = serializers.IntegerField(source='ingredient.id', read_only=True)
     name = serializers.CharField(source='ingredient.name')
     measurement_unit = serializers.CharField(
         source='ingredient.measurement_unit', read_only=True
@@ -44,23 +44,102 @@ class IngredientRecipeSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'measurement_unit', 'amount')
 
 
-class RecipeSerializer(serializers.ModelSerializer):
-    tags = TagSerializer(many=True)
+class RecipeReadSerializer(serializers.ModelSerializer):
+    """Сериализатор для чтения модели рецептов."""
+
+    tags = TagSerializer(many=True, read_only=True)
     #author 
     ingredients = IngredientRecipeSerializer(many=True,
                                              source='recipe_ingredients')
     #is_favorited
     #is_in_shopping_cart
-    image = Base64ImageField()
 
     class Meta:
         model = Recipe
-        fields = ('id', 'tags', 'author', 'ingredients',
-                  'is_favorited', 'is_in_shopping_cart',
-                  'name', 'image', 'text', 'cooking_time')
+        fields = ('id', 'tags', 'ingredients',
+                  'name', 'image', 'text', 'cooking_time')    
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         if instance.image:
-            representation['image'] = instance.image.url
+            representation['image'] = self.context[
+                'request'].build_absolute_uri(instance.image.url)
         return representation
+
+
+class IngredientRecipeWriteSerializer(serializers.ModelSerializer):
+    """Сериализатор для записи игредиентов в рецепте."""
+
+    id = serializers.PrimaryKeyRelatedField(queryset=Ingredient.objects.all())
+
+    class Meta:
+        model = IngredientRecipe
+        fields = ('id', 'amount')
+
+
+class RecipeIWriteSerializer(serializers.ModelSerializer):
+    """Сериализатор для записи модели рецептов."""
+
+    tags = serializers.PrimaryKeyRelatedField(
+        queryset=Tag.objects.all(),
+        many=True,
+        required=True,
+        allow_empty=False,
+        allow_null=False
+    )
+    image = Base64ImageField()
+    ingredients = IngredientRecipeWriteSerializer(many=True)
+
+    class Meta:
+        model = Recipe
+        fields = ('ingredients', 'tags', 'image',
+                  'name', 'text', 'cooking_time')
+
+    def create(self, validated_data):
+        ingredients_data = validated_data.pop('ingredients')
+        tags_data = validated_data.pop('tags')
+        recipe = Recipe.objects.create(**validated_data)
+
+        for ingredient in ingredients_data:
+            cur_ingredient = Ingredient.objects.get(id=ingredient['id'])
+            IngredientRecipe.objects.create(recipe=recipe,
+                                            ingredient=cur_ingredient,
+                                            amount=ingredient['amount'])
+
+        for tag in tags_data:
+            current_tag = Tag.objects.get(**tag)
+            TagRecipe.objects.create(recipe=recipe, tag=current_tag)
+
+        return recipe
+
+    def update(self, instance, validated_data):
+        instance.image = validated_data.get('image', instance.image)
+        instance.name = validated_data.get('name', instance.name)
+        instance.text = validated_data.get('text', instance.text)
+        instance.cooking_time = validated_data.get(
+            'cooking_time', instance.cooking_time
+        )
+        ingredients_data = validated_data.pop('ingredients')
+        tags_data = validated_data.pop('tags')
+
+        tags_lst = []
+        for tag in tags_data:
+            current_tag, _ = Tag.objects.get(**tag)
+            tags_lst.append(current_tag)
+        instance.tags.set(tags_lst)
+
+        IngredientRecipe.objects.filter(recipe=instance).delete()
+        for ingredient in ingredients_data:
+            cur_ingredient = Ingredient.objects.get(id=ingredient['id'])
+            IngredientRecipe.objects.create(
+                recipe=instance, ingredient=cur_ingredient,
+                amount=ingredient['amount']
+            )
+
+        instance.save()
+        return instance
+
+    def to_representation(self, instance):
+        """Метод для возвращения данных, как при GET запросе."""
+        serializer = RecipeReadSerializer(instance)
+        return serializer.data

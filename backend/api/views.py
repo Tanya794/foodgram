@@ -1,13 +1,17 @@
 from django.shortcuts import render
+from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
 from rest_framework import viewsets
+from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
 from rest_framework.response import Response
 from rest_framework.permissions import (IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.views import APIView
 
-from api.serializers import IngredientSerializer, TagSerializer
-from recipes.models import Ingredient, ShoppingCart, Tag
+from api.serializers import (IngredientSerializer, RecipeSerializer,
+                             TagSerializer)
+from recipes.models import Ingredient, Recipe, ShoppingCart, Tag
 from recipes.renderers import PlainTextRenderer
 
 
@@ -60,3 +64,24 @@ class ShoppingCartDownloadView(APIView):
             'attachment; filename="products_list.txt"')
 
         return response
+
+
+class RedirectToRecipeAPI(APIView):
+    """Перенаправляет по короткой ссылке на рецепт."""
+
+    def get(self, request, short_link):
+        recipe = get_object_or_404(Recipe, short_link=short_link)
+        return redirect('recipe_detail', pk=recipe.id)
+
+
+class RecipeViewSet(viewsets.ModelViewSet):
+    queryset = Recipe.objects.all()
+    serializer_class = RecipeSerializer
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+
+    @action(detail=True, methods=['get'], url_path='get-link')
+    def get_link(self, request, pk=None):
+        recipe = self.get_object()
+        short_link = request.build_absolute_uri(reverse('redirect_to_recipe',
+                                                args=[recipe.short_link]))
+        return Response({'short_link': short_link})

@@ -1,5 +1,4 @@
-from random import choice
-from string import ascii_letters, digits
+import uuid
 
 from django.contrib.auth import get_user_model
 from django.db import models
@@ -7,17 +6,9 @@ from django.db import models
 from recipes.constants import (LENGTH_INGREDIENT, LENGTH_MESURE_UNIT,
                                LENGTH_TAG, LENGTH_TO_DISPLAY,
                                RECIPE_NAME_LENGTH, SHORT_LINK_LENGTH)
-from recipes.validators import validate_cooking_time_or_amount, validate_slug
+from recipes.validators import validate_slug
 
 User = get_user_model()
-
-
-def generate_unique_link(length=SHORT_LINK_LENGTH):
-    """Генерирует уникальную короткую ссылку на рецепт."""
-    while True:
-        link = ''.join(choice(ascii_letters + digits) for _ in range(length))
-        if not Recipe.objects.filter(short_link=link).exists():
-            return link
 
 
 class Recipe(models.Model):
@@ -36,19 +27,23 @@ class Recipe(models.Model):
     tags = models.ManyToManyField('Tag',
                                   through='TagRecipe',
                                   verbose_name='Теги')
-    cooking_time = models.IntegerField(
-        'Время приготовления (в минутах)',
-        validators=[validate_cooking_time_or_amount],
-        blank=False
+    cooking_time = models.PositiveIntegerField(
+        'Время приготовления (в минутах)', blank=False
     )
     pub_date = models.DateTimeField('Дата публикации', auto_now_add=True)
     short_link = models.CharField('Короткая ссылка',
                                   max_length=SHORT_LINK_LENGTH,
-                                  unique=True, default=generate_unique_link)
+                                  unique=True, blank=True)
 
     class Meta:
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
+
+    def save(self, *args, **kwargs):
+        """Генерирует уникальную короткую ссылку на рецепт."""
+        if not self.short_link:
+            self.short_link = str(uuid.uuid4())[:SHORT_LINK_LENGTH]
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name[:LENGTH_TO_DISPLAY]
@@ -107,10 +102,7 @@ class IngredientRecipe(models.Model):
                                    related_name='ingredient_in_recipes',
                                    on_delete=models.CASCADE,
                                    verbose_name='Ингредиент')
-    amount = models.SmallIntegerField(
-        'Количество',
-        validators=[validate_cooking_time_or_amount]
-    )
+    amount = models.PositiveIntegerField('Количество')
 
     class Meta:
         verbose_name = 'Ингредиент'
