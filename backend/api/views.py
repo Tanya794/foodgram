@@ -75,6 +75,8 @@ class RedirectToRecipeAPI(APIView):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
+    """CRUD для модели Recipe."""
+
     queryset = Recipe.objects.all()
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
@@ -89,3 +91,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if self.request.method in SAFE_METHODS:
             return RecipeReadSerializer
         return RecipeIWriteSerializer
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({'request': self.request})
+        return context
