@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
@@ -9,6 +10,7 @@ from rest_framework.permissions import (SAFE_METHODS, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.views import APIView
 
+from api.filters import RecipeFilter
 from api.serializers import (IngredientSerializer, RecipeReadSerializer,
                              RecipeIWriteSerializer, TagSerializer)
 from recipes.models import Ingredient, Recipe, ShoppingCart, Tag
@@ -78,6 +80,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
     """CRUD для модели Recipe."""
 
     queryset = Recipe.objects.all()
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = RecipeFilter
 
     @action(detail=True, methods=['get'], url_path='get-link')
     def get_link(self, request, pk=None):
