@@ -78,7 +78,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
     """CRUD для модели Recipe."""
 
     queryset = Recipe.objects.all()
-    permission_classes = (IsAuthenticatedOrReadOnly,)
 
     @action(detail=True, methods=['get'], url_path='get-link')
     def get_link(self, request, pk=None):
