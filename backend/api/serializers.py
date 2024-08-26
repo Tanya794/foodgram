@@ -4,7 +4,7 @@ from django.core.files.base import ContentFile
 from rest_framework import serializers
 
 from recipes.models import (Ingredient, IngredientRecipe, Favorite,
-                            Recipe, ShoppingCart, Tag, TagRecipe)
+                            Recipe, ShoppingCart, Tag)
 from users.serializers import NewUserSerializer
 
 
@@ -21,6 +21,7 @@ class Base64ImageField(serializers.ImageField):
 
 
 class TagSerializer(serializers.ModelSerializer):
+    """Сериализатор для модели Tag."""
 
     class Meta:
         model = Tag
@@ -28,6 +29,7 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class IngredientSerializer(serializers.ModelSerializer):
+    """Сериализатор для модели Ingredient."""
 
     class Meta:
         model = Ingredient
@@ -35,6 +37,8 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class IngredientRecipeSerializer(serializers.ModelSerializer):
+    """Сериализатор для игредиентов рецептов модели IngredientRecipe."""
+
     id = serializers.IntegerField(source='ingredient.id', read_only=True)
     name = serializers.CharField(source='ingredient.name')
     measurement_unit = serializers.CharField(
@@ -158,4 +162,64 @@ class RecipeIWriteSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         """Метод для возвращения данных, как при GET запросе."""
         serializer = RecipeReadSerializer(instance)
+        return serializer.data
+
+
+class RecipeRepresentation(serializers.ModelSerializer):
+    """После добавления рецепта в корзину/избранное."""
+
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time')
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        if instance.image:
+            if 'request' in self.context:
+                representation['image'] = self.context[
+                    'request'].build_absolute_uri(instance.image.url)
+            else:
+                representation['image'] = instance.image.url
+        return representation
+
+
+class ShoppingCartSerializer(serializers.ModelSerializer):
+    """Сериализатор корзины с рецептами."""
+
+    class Meta:
+        model = ShoppingCart
+        fields = ('recipe',)
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        recipe = validated_data['recipe']
+        cart_item, _ = ShoppingCart.objects.get_or_create(
+            user=user, recipe=recipe
+        )
+        return cart_item
+
+    def to_representation(self, instance):
+        recipe = instance.recipe
+        serializer = RecipeRepresentation(recipe)
+        return serializer.data
+
+
+class FavoriteSerializer(serializers.ModelSerializer):
+    """Сериализатор рецептов в Избранное."""
+
+    class Meta:
+        model = Favorite
+        fields = ('recipe',)
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        recipe = validated_data['recipe']
+        fav_item, _ = Favorite.objects.get_or_create(
+            user=user, recipe=recipe
+        )
+        return fav_item
+
+    def to_representation(self, instance):
+        recipe = instance.recipe
+        serializer = RecipeRepresentation(recipe)
         return serializer.data
