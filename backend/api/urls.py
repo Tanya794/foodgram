@@ -13,7 +13,7 @@ v1_router = DefaultRouter()
 v1_router.register(r'tags', TagViewSet)
 v1_router.register(r'ingredients', IngredientViewSet)
 v1_router.register(r'recipes', RecipeViewSet, basename='recipe')
-v1_router.register(r'users', NewUserViewSet, basename='user')
+
 
 # v1_router.register(r'recipes/(?P<recipe_id>\d+)/get-link')
 
@@ -31,11 +31,13 @@ urlpatterns = [
     path('recipes/<int:recipe_id>/favorite/',
          FavoriteViewSet.as_view({'post': 'create', 'delete': 'destroy'}),
          name='favorite'),
+
     path('users/subscriptions/', SubscriptionListAPI.as_view(),
          name='subscriptions'),
 
     path('users/me/', NewUserViewSet.as_view({'get': 'retrieve'}),
          name='user-me'),
+
     path('recipes/download_shopping_cart/',
          ShoppingCartDownloadView.as_view(), name='download'),
 ]

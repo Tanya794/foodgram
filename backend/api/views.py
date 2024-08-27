@@ -14,7 +14,8 @@ from api.filters import RecipeFilter
 from api.permissions import IsAuthorOrReadOnly
 from api.serializers import (IngredientSerializer, RecipeReadSerializer,
                              RecipeIWriteSerializer, ShoppingCartSerializer,
-                             TagSerializer, FavoriteSerializer, SubscriptionSerializer)
+                             TagSerializer, FavoriteSerializer,
+                             SubscriptionSerializer)
 from recipes.models import Ingredient, Recipe, ShoppingCart, Tag, Favorite
 from recipes.renderers import PlainTextRenderer
 
@@ -178,6 +179,5 @@ class SubscriptionListAPI(generics.ListAPIView):
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
-        print('!!!!!!!!!!!!')
         current_user = self.request.user
-        return current_user.subscriptions.all()
+        return current_user.subscriptions.all().order_by('id')
