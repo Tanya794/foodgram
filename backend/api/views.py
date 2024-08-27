@@ -1,9 +1,8 @@
 from django.shortcuts import render
-from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse
+from django.shortcuts import get_object_or_404
+from django.urls import reverse, NoReverseMatch
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import generics, status
-from rest_framework import viewsets
+from rest_framework import generics, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
 from rest_framework.response import Response
@@ -15,7 +14,7 @@ from api.filters import RecipeFilter
 from api.permissions import IsAuthorOrReadOnly
 from api.serializers import (IngredientSerializer, RecipeReadSerializer,
                              RecipeIWriteSerializer, ShoppingCartSerializer,
-                             TagSerializer, FavoriteSerializer)
+                             TagSerializer, FavoriteSerializer, SubscriptionSerializer)
 from recipes.models import Ingredient, Recipe, ShoppingCart, Tag, Favorite
 from recipes.renderers import PlainTextRenderer
 
@@ -71,27 +70,36 @@ class ShoppingCartDownloadView(APIView):
         return response
 
 
-class RedirectToRecipeAPI(APIView):
-    """Перенаправляет по короткой ссылке на рецепт."""
+class ReturnShortLinkRecipeAPI(APIView):
+    """Возвращает объект рецепта по короткой ссылке."""
+
+    permission_classes = (IsAuthorOrReadOnly,)
 
     def get(self, request, short_link):
         recipe = get_object_or_404(Recipe, short_link=short_link)
-        return redirect('recipe_detail', pk=recipe.id)
+        serializer = RecipeReadSerializer(recipe)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
     """CRUD для модели Recipe."""
 
-    queryset = Recipe.objects.all()
+    queryset = Recipe.objects.prefetch_related(
+        'ingredients', 'tags').select_related('author')
     permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
 
     @action(detail=True, methods=['get'], url_path='get-link')
     def get_link(self, request, pk=None):
+        print('GET LINK')
         recipe = self.get_object()
-        short_link = request.build_absolute_uri(reverse('redirect_to_recipe',
-                                                args=[recipe.short_link]))
+        try:
+            short_link = request.build_absolute_uri(reverse(
+                'recipe-short-link', args=[recipe.short_link]))
+        except NoReverseMatch:
+            return Response({'detail': 'Маршрут не найден'}, status=404)
+
         return Response({'short_link': short_link})
 
     def get_serializer_class(self):
@@ -161,3 +169,15 @@ class FavoriteViewSet(viewsets.ViewSet):
         except Favorite.DoesNotExist:
             return Response({"detail": "Рецепта нет в Избранном."},
                             status=status.HTTP_404_NOT_FOUND)
+
+
+class SubscriptionListAPI(generics.ListAPIView):
+    """Получение списка подписок текущего юзера."""
+
+    serializer_class = SubscriptionSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def get_queryset(self):
+        print('!!!!!!!!!!!!')
+        current_user = self.request.user
+        return current_user.subscriptions.all()
