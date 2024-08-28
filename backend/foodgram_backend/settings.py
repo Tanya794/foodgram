@@ -7,6 +7,8 @@ SECRET_KEY = 'django-insecure-kw#%9!+#c0l!g9bj&=-&io^-g7mnuvghrgz*q(+!(ja&$xr2p&
 
 DEBUG = True
 
+BASE_URL = 'http://127.0.0.1:8000' if DEBUG else 'http://158.160.65.231'
+
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '158.160.65.231']
 
 

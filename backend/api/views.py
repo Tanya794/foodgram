@@ -12,10 +12,11 @@ from rest_framework.views import APIView
 
 from api.filters import RecipeFilter
 from api.permissions import IsAuthorOrReadOnly
-from api.serializers import (IngredientSerializer, RecipeReadSerializer,
-                             RecipeIWriteSerializer, ShoppingCartSerializer,
-                             TagSerializer, FavoriteSerializer,
-                             SubscriptionSerializer, SubscribeActionSerializer)
+from api.serializers import (AvatarSerializer, IngredientSerializer,
+                             RecipeReadSerializer, RecipeIWriteSerializer,
+                             ShoppingCartSerializer, TagSerializer,
+                             FavoriteSerializer, SubscriptionSerializer,
+                             SubscribeActionSerializer)
 from recipes.models import Ingredient, Recipe, ShoppingCart, Tag, Favorite
 from recipes.renderers import PlainTextRenderer
 from users.models import Subscription
@@ -47,6 +48,7 @@ class ShoppingCartDownloadView(APIView):
     permission_classes = (IsAuthenticated,)
 
     def get(self, request, format=None):
+        print('Starts working...')
         cart_items = ShoppingCart.objects.filter(user=request.user)
 
         in_cart = {}
@@ -221,3 +223,30 @@ class SubscribeViewSet(viewsets.ViewSet):
         except Subscription.DoesNotExist:
             return Response({"detail": "Пользователь не найден."},
                             status=status.HTTP_404_NOT_FOUND)
+
+
+class AvatarUpdateView(generics.UpdateAPIView):
+    """Обновление / удаление аватара."""
+    queryset = User.objects.all()
+    serializer_class = AvatarSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def get_object(self):
+        return self.request.user
+
+    def put(self, request, *args, **kwargs):
+        print('PUT works')
+        user = self.get_object()
+        serializer = self.get_serializer(user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data)
+
+    def delete(self, request, *args, **kwargs):
+        print('DELETE works')
+        user = self.get_object()
+        if user.avatar:
+            user.avatar.delete(save=False)
+            user.avatar = None
+            user.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)

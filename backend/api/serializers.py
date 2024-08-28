@@ -290,3 +290,18 @@ class SubscribeActionSerializer(serializers.ModelSerializer):
         serializer = SubscriptionSerializer(subscribed_to,
                                             context=context)
         return serializer.data
+
+
+class AvatarSerializer(serializers.ModelSerializer):
+    """Сериализатор работы с аватаром."""
+
+    avatar = Base64ImageField(required=False)
+
+    class Meta:
+        model = User
+        fields = ('avatar',)
+
+    def update(self, instance, validated_data):
+        if 'avatar' in validated_data and instance.avatar:
+            instance.avatar.delete(save=False)
+        return super().update(instance, validated_data)
