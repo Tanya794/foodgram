@@ -1,5 +1,6 @@
 import base64
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from rest_framework import serializers
@@ -87,11 +88,8 @@ class RecipeReadSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         if instance.image:
-            if 'request' in self.context:
-                representation['image'] = self.context[
-                    'request'].build_absolute_uri(instance.image.url)
-            else:
-                representation['image'] = instance.image.url
+            image_url = instance.image.url
+            representation['image'] = f'{settings.BASE_URL}{image_url}'
         return representation
 
 
@@ -179,11 +177,8 @@ class RecipeRepresentation(serializers.ModelSerializer):
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         if instance.image:
-            if 'request' in self.context:
-                representation['image'] = self.context[
-                    'request'].build_absolute_uri(instance.image.url)
-            else:
-                representation['image'] = instance.image.url
+            image_url = instance.image.url
+            representation['image'] = f'{settings.BASE_URL}{image_url}'
         return representation
 
 
@@ -259,7 +254,12 @@ class SubscriptionSerializer(serializers.ModelSerializer):
     def get_recipes_count(self, obj):
         return Recipe.objects.filter(author=obj).count()
 
-    # write for avatar field
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        if instance.avatar:
+            avatar_url = instance.avatar.url
+            representation['avatar'] = f'{settings.BASE_URL}{avatar_url}'
+        return representation
 
 
 class SubscribeActionSerializer(serializers.ModelSerializer):
@@ -270,11 +270,8 @@ class SubscribeActionSerializer(serializers.ModelSerializer):
         fields = ('subscribed_to',)
 
     def create(self, validated_data):
-        print('CREATION STARTS')
         current_user = self.context['request'].user
-        print(f'current {current_user}')
         subscribed_to = validated_data['subscribed_to']
-        print(f'subscribing to {subscribed_to}')
         pair, created = Subscription.objects.get_or_create(
             user=current_user, subscribed_to=subscribed_to
         )
