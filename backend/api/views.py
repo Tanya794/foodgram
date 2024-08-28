@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from django.urls import reverse, NoReverseMatch
 from django_filters.rest_framework import DjangoFilterBackend
@@ -15,9 +15,13 @@ from api.permissions import IsAuthorOrReadOnly
 from api.serializers import (IngredientSerializer, RecipeReadSerializer,
                              RecipeIWriteSerializer, ShoppingCartSerializer,
                              TagSerializer, FavoriteSerializer,
-                             SubscriptionSerializer)
+                             SubscriptionSerializer, SubscribeActionSerializer)
 from recipes.models import Ingredient, Recipe, ShoppingCart, Tag, Favorite
 from recipes.renderers import PlainTextRenderer
+from users.models import Subscription
+
+
+User = get_user_model()
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -175,9 +179,45 @@ class FavoriteViewSet(viewsets.ViewSet):
 class SubscriptionListAPI(generics.ListAPIView):
     """Получение списка подписок текущего юзера."""
 
-    serializer_class = SubscriptionSerializer
+    serializer_class = SubscribeActionSerializer
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
+        print('GOT')
         current_user = self.request.user
         return current_user.subscriptions.all().order_by('id')
+
+
+class SubscribeViewSet(viewsets.ViewSet):
+    """Подписаться / отписаться от кого-то."""
+
+    permission_classes = (IsAuthenticated,)
+
+    def create(self, request, user_id):
+        print("CREATING")
+        subscrited_to = get_object_or_404(User, id=user_id)
+        print(f'{subscrited_to}')
+        serializer = SubscribeActionSerializer(
+            data={'subscribed_to': subscrited_to.id},
+            context={'request': request}
+        )
+
+        if serializer.is_valid():
+            pair = serializer.save()
+            return Response(SubscribeActionSerializer(pair).data,
+                            status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, user_id):
+        print('DELETE')
+        user = get_object_or_404(User, id=user_id)
+        try:
+            pair = Subscription.objects.get(user=request.user,
+                                            subscribed_to=user)
+            pair.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        except Subscription.DoesNotExist:
+            return Response({"detail": "Пользователь не найден."},
+                            status=status.HTTP_404_NOT_FOUND)

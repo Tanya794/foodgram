@@ -238,7 +238,7 @@ class FavoriteSerializer(serializers.ModelSerializer):
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):
-    """Сериализатор для работы с подписками."""
+    """Сериализатор для отображения подписок."""
 
     is_subscribed = serializers.SerializerMethodField()
     recipes = RecipeRepresentation(many=True)
@@ -250,9 +250,9 @@ class SubscriptionSerializer(serializers.ModelSerializer):
                   'is_subscribed', 'recipes', 'recipes_count', 'avatar')
 
     def get_is_subscribed(self, obj):
-        request = self.context.get('request')
-        if request and request.user.is_authenticated:
-            return Subscription.objects.filter(user=request.user,
+        current_user = self.context.get('current_user')
+        if current_user and current_user.is_authenticated:
+            return Subscription.objects.filter(user=current_user,
                                                subscribed_to=obj).exists()
         return False
 
@@ -260,3 +260,33 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         return Recipe.objects.filter(author=obj).count()
 
     # write for avatar field
+
+
+class SubscribeActionSerializer(serializers.ModelSerializer):
+    """Сериализатор пользователей для Подписок."""
+
+    class Meta:
+        model = Subscription
+        fields = ('subscribed_to',)
+
+    def create(self, validated_data):
+        print('CREATION STARTS')
+        current_user = self.context['request'].user
+        print(f'current {current_user}')
+        subscribed_to = validated_data['subscribed_to']
+        print(f'subscribing to {subscribed_to}')
+        pair, created = Subscription.objects.get_or_create(
+            user=current_user, subscribed_to=subscribed_to
+        )
+        if not created:
+            raise serializers.ValidationError(
+                """Подписка существует."""
+            )
+        return pair
+
+    def to_representation(self, instance):
+        subscribed_to = instance.subscribed_to
+        context = {'current_user': instance.user}
+        serializer = SubscriptionSerializer(subscribed_to,
+                                            context=context)
+        return serializer.data
