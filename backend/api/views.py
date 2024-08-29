@@ -15,8 +15,7 @@ from api.permissions import IsAuthorOrReadOnly
 from api.serializers import (AvatarSerializer, IngredientSerializer,
                              RecipeReadSerializer, RecipeIWriteSerializer,
                              ShoppingCartSerializer, TagSerializer,
-                             FavoriteSerializer, SubscriptionSerializer,
-                             SubscribeActionSerializer)
+                             FavoriteSerializer, SubscribeActionSerializer)
 from recipes.models import Ingredient, Recipe, ShoppingCart, Tag, Favorite
 from recipes.renderers import PlainTextRenderer
 from users.models import Subscription
@@ -48,7 +47,6 @@ class ShoppingCartDownloadView(APIView):
     permission_classes = (IsAuthenticated,)
 
     def get(self, request, format=None):
-        print('Starts working...')
         cart_items = ShoppingCart.objects.filter(user=request.user)
 
         in_cart = {}
@@ -99,7 +97,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get'], url_path='get-link')
     def get_link(self, request, pk=None):
-        print('GET LINK')
+        """Получение короткой ссылки к рецепту."""
         recipe = self.get_object()
         try:
             short_link = request.build_absolute_uri(reverse(
@@ -185,7 +183,6 @@ class SubscriptionListAPI(generics.ListAPIView):
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
-        print('GOT')
         current_user = self.request.user
         return current_user.subscriptions.all().order_by('id')
 
@@ -196,7 +193,6 @@ class SubscribeViewSet(viewsets.ViewSet):
     permission_classes = (IsAuthenticated,)
 
     def create(self, request, user_id):
-        print("CREATING")
         subscrited_to = get_object_or_404(User, id=user_id)
         print(f'{subscrited_to}')
         serializer = SubscribeActionSerializer(
@@ -212,7 +208,6 @@ class SubscribeViewSet(viewsets.ViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def destroy(self, request, user_id):
-        print('DELETE')
         user = get_object_or_404(User, id=user_id)
         try:
             pair = Subscription.objects.get(user=request.user,
@@ -227,6 +222,7 @@ class SubscribeViewSet(viewsets.ViewSet):
 
 class AvatarUpdateView(generics.UpdateAPIView):
     """Обновление / удаление аватара."""
+
     queryset = User.objects.all()
     serializer_class = AvatarSerializer
     permission_classes = (IsAuthenticated,)
@@ -235,7 +231,6 @@ class AvatarUpdateView(generics.UpdateAPIView):
         return self.request.user
 
     def put(self, request, *args, **kwargs):
-        print('PUT works')
         user = self.get_object()
         serializer = self.get_serializer(user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
@@ -243,7 +238,6 @@ class AvatarUpdateView(generics.UpdateAPIView):
         return Response(serializer.data)
 
     def delete(self, request, *args, **kwargs):
-        print('DELETE works')
         user = self.get_object()
         if user.avatar:
             user.avatar.delete(save=False)

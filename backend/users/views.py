@@ -16,12 +16,11 @@ class NewUserViewSet(UserViewSet):
         return context
 
     def retrieve(self, request, *args, **kwargs):
-        print('CALLED')
         if request.user.is_authenticated:
             instance = request.user
             serializer = self.get_serializer(instance)
             print(f'!!! {serializer.data}')
             return Response(serializer.data)
         return Response({
-            "detail": "Authentication credentials were not provided."},
+            "detail": "Пользователь не авторизован."},
             status=401)

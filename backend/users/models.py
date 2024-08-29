@@ -4,7 +4,6 @@ from django.db import models
 
 from users.constants import (EMAIL_MAX_LENGTH, NAME_MAX_LENGTH,
                              PASSWORD_MAX_LENGTH)
-from users.validators import validate_username
 
 
 class User(AbstractUser):

@@ -1,5 +1,6 @@
 import base64
 
+from django.conf import settings
 from djoser.serializers import TokenCreateSerializer, UserSerializer
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
@@ -34,6 +35,8 @@ class TokenLoginSerializer(TokenCreateSerializer):
 
 
 class NewUserSerializer(UserSerializer):
+    """Сериализатор информации о пользователе."""
+
     avatar = Base64ImageField(required=False, allow_null=True)
     is_subscribed = serializers.SerializerMethodField()
 
@@ -44,7 +47,6 @@ class NewUserSerializer(UserSerializer):
                   'is_subscribed', 'avatar')
 
     def get_is_subscribed(self, obj):
-        print('WORKS')
         request = self.context.get('request')
         if request and request.user.is_authenticated:
             return Subscription.objects.filter(user=request.user,
@@ -52,12 +54,8 @@ class NewUserSerializer(UserSerializer):
         return False
 
     def to_representation(self, instance):
-        print('YES')
         representation = super().to_representation(instance)
         if instance.avatar:
-            if 'request' in self.context:
-                representation['avatar'] = self.context[
-                    'request'].build_absolute_uri(instance.avatar.url)
-            else:
-                representation['avatar'] = instance.image.url
+            avatar_url = instance.avatar.url
+            representation['avatar'] = f'{settings.BASE_URL}{avatar_url}'
         return representation
