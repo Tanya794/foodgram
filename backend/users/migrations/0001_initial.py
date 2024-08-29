@@ -5,7 +5,8 @@ import django.contrib.auth.models
 from django.db import migrations, models
 import django.db.models.deletion
 import django.utils.timezone
-import users.validators
+from django.core.validators import RegexValidator
+
 
 
 class Migration(migrations.Migration):
@@ -27,7 +28,7 @@ class Migration(migrations.Migration):
                 ('is_active', models.BooleanField(default=True, help_text='Designates whether this user should be treated as active. Unselect this instead of deleting accounts.', verbose_name='active')),
                 ('date_joined', models.DateTimeField(default=django.utils.timezone.now, verbose_name='date joined')),
                 ('email', models.EmailField(max_length=254, verbose_name='Электронная почта')),
-                ('username', models.CharField(max_length=150, unique=True, validators=[users.validators.validate_username], verbose_name='Имя пользователя')),
+                ('username', models.CharField(max_length=150, unique=True, validators=[RegexValidator(regex='^[\\w.@+-]+\\Z')], verbose_name='Имя пользователя')),
                 ('first_name', models.CharField(max_length=150, verbose_name='Имя')),
                 ('last_name', models.CharField(max_length=150, verbose_name='Фамилия')),
                 ('password', models.CharField(max_length=128, verbose_name='Пароль')),
