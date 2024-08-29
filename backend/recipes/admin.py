@@ -1,4 +1,7 @@
+from collections.abc import Callable, Sequence
+from typing import Any
 from django.contrib import admin
+from django.http import HttpRequest
 
 from recipes.models import Ingredient, IngredientRecipe, Recipe, Tag, TagRecipe
 
@@ -16,9 +19,15 @@ class IngredientRecipeInline(admin.TabularInline):
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
     inlines = [TagRecipeInline, IngredientRecipeInline]
-    list_display = ('name', 'author')
+    list_display = ('name', 'author', 'favorite_count_display')
     search_fields = ('author__username', 'name')
     list_filter = ('tags',)
+
+    @admin.display(description='Добавили в Избранное')
+    def favorite_count_display(self, obj):
+        return obj.favorited_by.count()
+
+    readonly_fields = ('favorite_count_display',)
 
 
 @admin.register(Tag)
