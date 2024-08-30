@@ -121,6 +121,57 @@ class RecipeIWriteSerializer(serializers.ModelSerializer):
         fields = ('ingredients', 'tags', 'image',
                   'name', 'text', 'cooking_time')
 
+    def validate(self, attrs):
+        """Проверка обязательных полей."""
+        required_fields = ('ingredients', 'tags', 'image',
+                           'name', 'text', 'cooking_time')
+        missing_fields = []
+
+        for field in required_fields:
+            if field not in attrs or (isinstance(attrs[field], list)
+                                      and not attrs[field]):
+                missing_fields.append(field)
+
+        if missing_fields:
+            raise serializers.ValidationError(
+                {"detail": [f'Это поле {field} обязательное.' for
+                            field in missing_fields]})
+
+        cooking_time = attrs.get('cooking_time')
+        if cooking_time is not None and cooking_time < 1:
+            raise serializers.ValidationError(
+                {'detail': 'Время готовки должно быть минимум 1.'}
+            )
+
+        ingredients_data = attrs.get('ingredients')
+        if ingredients_data:
+            seen_ingredients = set()
+            for ingredient in ingredients_data:
+                amount = ingredient.get('amount')
+                cur_ingredient = ingredient.get('id')
+
+                if amount is not None and amount < 1:
+                    raise serializers.ValidationError(
+                        {'detail': 'amount должен быть не менее 1.'}
+                    )
+                if cur_ingredient in seen_ingredients:
+                    raise serializers.ValidationError(
+                        {'detail': 'Ингредиенты не должны повторяться.'}
+                    )
+                seen_ingredients.add(cur_ingredient)
+
+        tags_data = attrs.get('tags')
+        if tags_data:
+            seen_tags = set()
+            for tag in tags_data:
+                if tag in seen_tags:
+                    raise serializers.ValidationError(
+                        {'detail': 'Теги не должны повторяться.'}
+                    )
+                seen_tags.add(tag)
+
+        return attrs
+
     def create(self, validated_data):
         ingredients_data = validated_data.pop('ingredients')
         tags_data = validated_data.pop('tags')

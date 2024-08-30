@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django_filters import rest_framework as filters
 
-from recipes.models import Recipe
+from recipes.models import Recipe, Ingredient
 
 
 User = get_user_model()
@@ -30,3 +30,13 @@ class RecipeFilter(filters.FilterSet):
         if value:
             return queryset.filter(cart_users__user=self.request.user)
         return queryset
+
+
+class IngredientFilter(filters.FilterSet):
+    """Фильтр ингредиентов."""
+
+    name = filters.CharFilter(lookup_expr='icontains')
+
+    class Meta:
+        model = Ingredient
+        fields = ['name']

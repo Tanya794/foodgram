@@ -4,13 +4,12 @@ from django.urls import reverse, NoReverseMatch
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.filters import SearchFilter
 from rest_framework.response import Response
 from rest_framework.permissions import (SAFE_METHODS, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.views import APIView
 
-from api.filters import RecipeFilter
+from api.filters import RecipeFilter, IngredientFilter
 from api.permissions import IsAuthorOrReadOnly
 from api.serializers import (AvatarSerializer, IngredientSerializer,
                              RecipeReadSerializer, RecipeIWriteSerializer,
@@ -30,6 +29,7 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     permission_classes = (IsAuthenticatedOrReadOnly,)
+    pagination_class = None
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
@@ -38,11 +38,14 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     permission_classes = (IsAuthenticatedOrReadOnly,)
-    filter_backends = (SearchFilter,)
-    search_fields = ('^name',)
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = IngredientFilter
+    pagination_class = None
 
 
 class ShoppingCartDownloadView(APIView):
+    """Скачивание списка покупок."""
+
     renderer_classes = [PlainTextRenderer]
     permission_classes = (IsAuthenticated,)
 
@@ -144,7 +147,7 @@ class ShoppingCartViewSet(viewsets.ViewSet):
             return Response(status=status.HTTP_204_NO_CONTENT)
         except ShoppingCart.DoesNotExist:
             return Response({"detail": "Рецепта нет в корзине."},
-                            status=status.HTTP_404_NOT_FOUND)
+                            status=status.HTTP_400_BAD_REQUEST)
 
 
 class FavoriteViewSet(viewsets.ViewSet):
@@ -173,7 +176,7 @@ class FavoriteViewSet(viewsets.ViewSet):
             return Response(status=status.HTTP_204_NO_CONTENT)
         except Favorite.DoesNotExist:
             return Response({"detail": "Рецепта нет в Избранном."},
-                            status=status.HTTP_404_NOT_FOUND)
+                            status=status.HTTP_400_BAD_REQUEST)
 
 
 class SubscriptionListAPI(generics.ListAPIView):
@@ -235,7 +238,7 @@ class AvatarUpdateView(generics.UpdateAPIView):
         serializer = self.get_serializer(user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def delete(self, request, *args, **kwargs):
         user = self.get_object()

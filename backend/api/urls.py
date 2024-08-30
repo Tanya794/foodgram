@@ -14,12 +14,17 @@ v1_router = DefaultRouter()
 v1_router.register(r'tags', TagViewSet)
 v1_router.register(r'ingredients', IngredientViewSet)
 v1_router.register(r'recipes', RecipeViewSet, basename='recipe')
+# v1_router.register(r'users', NewUserViewSet, basename='user')
 
 
 urlpatterns = [
     path('recipes/download_shopping_cart/',
          ShoppingCartDownloadView.as_view(), name='download'),
     path('', include(v1_router.urls)),
+
+    #path('users/', NewUserViewSet.as_view({'get': 'list'}), name='user-list'),
+    #path('users/<int:pk>', NewUserViewSet.as_view({'get': 'retrive'}), name='user-detail'),
+
     path('recipes/<int:recipe_id>/shopping_cart/',
          ShoppingCartViewSet.as_view({'post': 'create', 'delete': 'destroy'}),
          name='shopping_cart'),
