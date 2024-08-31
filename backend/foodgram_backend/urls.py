@@ -3,7 +3,8 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
-from api.views import ReturnShortLinkRecipeAPI, ShoppingCartDownloadView
+from api.views import ReturnShortLinkRecipeAPI
+from users.views import NewUserViewSet
 
 
 urlpatterns = [

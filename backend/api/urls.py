@@ -5,7 +5,7 @@ from api.views import (IngredientViewSet, RecipeViewSet, ShoppingCartViewSet,
                        ShoppingCartDownloadView, SubscriptionListAPI,
                        TagViewSet, FavoriteViewSet, SubscribeViewSet,
                        AvatarUpdateView)
-from users.views import NewUserViewSet
+from users.views import NewUserViewSet, UserGetViewSet
 
 app_name = 'api'
 
@@ -14,7 +14,6 @@ v1_router = DefaultRouter()
 v1_router.register(r'tags', TagViewSet)
 v1_router.register(r'ingredients', IngredientViewSet)
 v1_router.register(r'recipes', RecipeViewSet, basename='recipe')
-# v1_router.register(r'users', NewUserViewSet, basename='user')
 
 
 urlpatterns = [
@@ -22,8 +21,11 @@ urlpatterns = [
          ShoppingCartDownloadView.as_view(), name='download'),
     path('', include(v1_router.urls)),
 
-    #path('users/', NewUserViewSet.as_view({'get': 'list'}), name='user-list'),
-    #path('users/<int:pk>', NewUserViewSet.as_view({'get': 'retrive'}), name='user-detail'),
+    path('users/', UserGetViewSet.as_view({'get': 'list', 'post': 'create'}),
+         name='user-list-create'),
+
+    path('users/<int:pk>/', UserGetViewSet.as_view({'get': 'retrieve'}),
+         name='user-detail'),
 
     path('recipes/<int:recipe_id>/shopping_cart/',
          ShoppingCartViewSet.as_view({'post': 'create', 'delete': 'destroy'}),

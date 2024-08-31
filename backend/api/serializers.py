@@ -349,6 +349,16 @@ class AvatarSerializer(serializers.ModelSerializer):
         model = User
         fields = ('avatar',)
 
+    def validate(self, attrs):
+        avatar = attrs.get('avatar', None)
+        if avatar is None or (
+            isinstance(avatar, str) and avatar.strip() == ''
+        ):
+            raise serializers.ValidationError(
+                {'avatar': 'Передаваемое поле не может быть пустым.'}
+            )
+        return attrs
+
     def update(self, instance, validated_data):
         if 'avatar' in validated_data and instance.avatar:
             instance.avatar.delete(save=False)

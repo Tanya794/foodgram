@@ -59,3 +59,16 @@ class NewUserSerializer(UserSerializer):
             avatar_url = instance.avatar.url
             representation['avatar'] = f'{settings.BASE_URL}{avatar_url}'
         return representation
+
+
+class UserCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('email', 'username', 'first_name', 'last_name', 'password')
+
+    def create(self, validated_data):
+        password = validated_data.pop('password')
+        user = User(**validated_data)
+        user.set_password(password)
+        user.save()
+        return user
