@@ -6,7 +6,6 @@ from django.urls import include, path
 from api.views import ReturnShortLinkRecipeAPI
 from users.views import NewUserViewSet
 
-
 urlpatterns = [
     path('api/', include('api.urls')),
     path('admin/', admin.site.urls),

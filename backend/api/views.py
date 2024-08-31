@@ -1,24 +1,23 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
-from django.urls import reverse, NoReverseMatch
+from django.urls import NoReverseMatch, reverse
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.response import Response
 from rest_framework.permissions import (SAFE_METHODS, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
+from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api.filters import RecipeFilter, IngredientFilter
+from api.filters import IngredientFilter, RecipeFilter
 from api.permissions import IsAuthorOrReadOnly
-from api.serializers import (AvatarSerializer, IngredientSerializer,
-                             RecipeReadSerializer, RecipeIWriteSerializer,
-                             ShoppingCartSerializer, TagSerializer,
-                             FavoriteSerializer, SubscribeActionSerializer)
-from recipes.models import Ingredient, Recipe, ShoppingCart, Tag, Favorite
+from api.serializers import (AvatarSerializer, FavoriteSerializer,
+                             IngredientSerializer, RecipeIWriteSerializer,
+                             RecipeReadSerializer, ShoppingCartSerializer,
+                             SubscribeActionSerializer, TagSerializer)
+from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
 from recipes.renderers import PlainTextRenderer
 from users.models import Subscription
-
 
 User = get_user_model()
 

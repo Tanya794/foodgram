@@ -5,7 +5,6 @@ class IsAuthorOrReadOnly(permissions.BasePermission):
     """Редактировать только автору/админу, чтение - всем."""
 
     def has_permission(self, request, view):
-        print('PERMISSION')
         if request.method in permissions.SAFE_METHODS:
             return True
         return request.user.is_authenticated and (

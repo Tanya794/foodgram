@@ -1,15 +1,14 @@
-from rest_framework import status, viewsets
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
+from djoser.serializers import UserSerializer
+from djoser.views import UserViewSet
+from rest_framework import status, viewsets
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from djoser.views import UserViewSet
-from djoser.serializers import UserSerializer
 
-from api.permissions import IsAuthorOrReadOnly
 from api.pagination import FoodgramPagination
+from api.permissions import IsAuthorOrReadOnly
 from users.serializers import NewUserSerializer, UserCreateSerializer
-
 
 User = get_user_model()
 
@@ -36,6 +35,7 @@ class NewUserViewSet(UserViewSet):
 
 
 class UserGetViewSet(viewsets.ViewSet):
+    """Предоставляет просмотр и создание юзера(ов)."""
 
     permission_classes = (AllowAny,)
 

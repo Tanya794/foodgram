@@ -1,18 +1,18 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from api.views import (IngredientViewSet, RecipeViewSet, ShoppingCartViewSet,
-                       ShoppingCartDownloadView, SubscriptionListAPI,
-                       TagViewSet, FavoriteViewSet, SubscribeViewSet,
-                       AvatarUpdateView)
+from api.views import (AvatarUpdateView, FavoriteViewSet, IngredientViewSet,
+                       RecipeViewSet, ShoppingCartDownloadView,
+                       ShoppingCartViewSet, SubscribeViewSet,
+                       SubscriptionListAPI, TagViewSet)
 from users.views import NewUserViewSet, UserGetViewSet
 
 app_name = 'api'
 
 v1_router = DefaultRouter()
 
-v1_router.register(r'tags', TagViewSet)
-v1_router.register(r'ingredients', IngredientViewSet)
+v1_router.register(r'tags', TagViewSet, basename='tag')
+v1_router.register(r'ingredients', IngredientViewSet, basename='ingredient')
 v1_router.register(r'recipes', RecipeViewSet, basename='recipe')
 
 
@@ -20,13 +20,10 @@ urlpatterns = [
     path('recipes/download_shopping_cart/',
          ShoppingCartDownloadView.as_view(), name='download'),
     path('', include(v1_router.urls)),
-
     path('users/', UserGetViewSet.as_view({'get': 'list', 'post': 'create'}),
          name='user-list-create'),
-
     path('users/<int:pk>/', UserGetViewSet.as_view({'get': 'retrieve'}),
          name='user-detail'),
-
     path('recipes/<int:recipe_id>/shopping_cart/',
          ShoppingCartViewSet.as_view({'post': 'create', 'delete': 'destroy'}),
          name='shopping_cart'),

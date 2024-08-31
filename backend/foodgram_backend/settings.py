@@ -1,15 +1,19 @@
+import os
 from pathlib import Path
+
+from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+load_dotenv()
 
-SECRET_KEY = 'django-insecure-kw#%9!+#c0l!g9bj&=-&io^-g7mnuvghrgz*q(+!(ja&$xr2p&'
+SECRET_KEY = os.getenv('SECRET_KEY', default='django-insecure-kw#%9!+#c0l!g9bj&=-&io^-g7mnuvghrgz*q(+!(ja&$xr2p&')
 
-DEBUG = True
+DEBUG = os.getenv('DEBUG') == 'True'
 
 BASE_URL = 'http://127.0.0.1:8000' if DEBUG else 'http://158.160.65.231'
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '158.160.65.231']
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '158.160.65.231,127.0.0.1,localhost').split(',')
 
 
 INSTALLED_APPS = [

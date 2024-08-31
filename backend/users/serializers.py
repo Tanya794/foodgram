@@ -1,13 +1,12 @@
 import base64
 
 from django.conf import settings
-from djoser.serializers import TokenCreateSerializer, UserSerializer
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
+from djoser.serializers import TokenCreateSerializer, UserSerializer
 from rest_framework import serializers
 
 from users.models import Subscription
-
 
 User = get_user_model()
 
@@ -62,6 +61,8 @@ class NewUserSerializer(UserSerializer):
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
+    """Сериализатор для создания пользователя."""
+
     class Meta:
         model = User
         fields = ('email', 'username', 'first_name', 'last_name', 'password')
