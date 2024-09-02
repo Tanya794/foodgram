@@ -1,8 +1,4 @@
-from collections.abc import Callable, Sequence
-from typing import Any
-
 from django.contrib import admin
-from django.http import HttpRequest
 
 from recipes.models import Ingredient, IngredientRecipe, Recipe, Tag, TagRecipe
 
