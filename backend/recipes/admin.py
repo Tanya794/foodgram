@@ -19,12 +19,11 @@ class RecipeAdmin(admin.ModelAdmin):
     list_display = ('name', 'author', 'favorite_count_display')
     search_fields = ('author__username', 'name')
     list_filter = ('tags',)
+    readonly_fields = ('favorite_count_display', 'short_link')
 
     @admin.display(description='Добавили в Избранное')
     def favorite_count_display(self, obj):
         return obj.favorited_by.count()
-
-    readonly_fields = ('favorite_count_display',)
 
 
 @admin.register(Tag)
