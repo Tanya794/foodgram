@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.db.models import Q
 from django_filters import rest_framework as filters
 
 from recipes.models import Ingredient, Recipe
@@ -14,7 +15,7 @@ class RecipeFilter(filters.FilterSet):
     is_in_shopping_cart = filters.BooleanFilter(
         method='filter_is_in_shopping_cart'
     )
-    tags = filters.CharFilter(field_name='tags__slug', lookup_expr='icontains')
+    tags = filters.CharFilter(method='filter_tags')
 
     class Meta:
         model = Recipe
@@ -29,6 +30,14 @@ class RecipeFilter(filters.FilterSet):
         if value:
             return queryset.filter(cart_users__user=self.request.user)
         return queryset
+
+    def filter_tags(self, queryset, name, value):
+        tags = self.request.GET.getlist('tags')
+        q_objects = Q()
+        for tag in tags:
+            q_objects |= Q(tags__slug__icontains=tag.strip())
+
+        return queryset.filter(q_objects)
 
 
 class IngredientFilter(filters.FilterSet):
