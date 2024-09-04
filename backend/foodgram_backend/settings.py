@@ -11,7 +11,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', default='django-insecure-kw#%9!+#c0l!g9bj&=
 
 DEBUG = os.getenv('DEBUG') == 'True'
 
-BASE_URL = 'http://127.0.0.1:8000' if DEBUG else 'http://158.160.65.231'
+BASE_URL = 'http://127.0.0.1:8000' if DEBUG else 'http://158.160.65.231:7007'
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '158.160.65.231,127.0.0.1,localhost').split(',')
 
