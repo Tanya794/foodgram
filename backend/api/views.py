@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import NoReverseMatch, reverse
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, status, viewsets
@@ -78,14 +78,15 @@ class ShoppingCartDownloadView(APIView):
 
 
 class ReturnShortLinkRecipeAPI(APIView):
-    """Возвращает объект рецепта по короткой ссылке."""
+    """Перенаправляет на объект рецепта по короткой ссылке."""
 
     permission_classes = (IsAuthorOrReadOnly,)
 
     def get(self, request, short_link):
         recipe = get_object_or_404(Recipe, short_link=short_link)
-        serializer = RecipeReadSerializer(recipe)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        recipe_id = recipe.id
+        redirect_url = f'/api/recipes/{recipe_id}/'
+        return redirect(redirect_url)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -107,7 +108,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         except NoReverseMatch:
             return Response({'detail': 'Маршрут не найден'}, status=404)
 
-        return Response({'short_link': short_link})
+        return Response({'short-link': short_link})
 
     def get_serializer_class(self):
         if self.request.method in SAFE_METHODS:
