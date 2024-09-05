@@ -5,7 +5,7 @@ API проекта Foodgram
 ### Стек используемых технологий:
 Python, Django Rest Framework, Postgres
 
-### Как запустить проект:
+### Создание виртуального окружения:
 
 Клонировать репозиторий и перейти в него в командной строке:
 
@@ -25,36 +25,6 @@ python3.9 -m venv venv
 
 ```
 source venv/bin/activate
-```
-
-```
-python3 -m pip install --upgrade pip
-```
-
-Установить зависимости из файла requirements.txt:
-
-```
-cd requirements
-```
-
-```
-pip install -r requirements.txt
-```
-
-```
-cd ..
-```
-
-Выполнить миграции:
-
-```
-python3 manage.py migrate
-```
-
-Запустить проект:
-
-```
-python3 manage.py runserver
 ```
 
 ### Чтобы посмотреть спецификацию API:

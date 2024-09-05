@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.conf import settings
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import NoReverseMatch, reverse
 from django_filters.rest_framework import DjangoFilterBackend
@@ -10,7 +11,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.filters import IngredientFilter, RecipeFilter
-from api.permissions import IsAuthorOrReadOnly
+from api.permissions import ActionRestriction, IsAuthorOrStaff
 from api.serializers import (AvatarSerializer, FavoriteSerializer,
                              IngredientSerializer, RecipeIWriteSerializer,
                              RecipeReadSerializer, ShoppingCartSerializer,
@@ -80,13 +81,13 @@ class ShoppingCartDownloadView(APIView):
 class ReturnShortLinkRecipeAPI(APIView):
     """Перенаправляет на объект рецепта по короткой ссылке."""
 
-    permission_classes = (IsAuthorOrReadOnly,)
+    permission_classes = (ActionRestriction,)
 
     def get(self, request, short_link):
         recipe = get_object_or_404(Recipe, short_link=short_link)
         recipe_id = recipe.id
-        redirect_url = f'/api/recipes/{recipe_id}/'
-        return redirect(redirect_url)
+        recipe_url = f'{settings.BASE_URL}/recipes/{recipe_id}/'
+        return redirect(recipe_url)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -94,7 +95,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     queryset = Recipe.objects.prefetch_related(
         'ingredients', 'tags').select_related('author')
-    permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly)
+    permission_classes = (IsAuthorOrStaff,)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
 

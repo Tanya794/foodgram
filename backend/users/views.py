@@ -7,7 +7,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 from api.pagination import FoodgramPagination
-from api.permissions import IsAuthorOrReadOnly
+from api.permissions import ActionRestriction
 from users.serializers import NewUserSerializer, UserCreateSerializer
 
 User = get_user_model()
@@ -17,7 +17,7 @@ class NewUserViewSet(UserViewSet):
     """Переопределяет вьюсет пользователя от djoser."""
 
     serializer_class = NewUserSerializer
-    permission_classes = (IsAuthorOrReadOnly,)
+    permission_classes = (ActionRestriction,)
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
