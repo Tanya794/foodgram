@@ -18,7 +18,7 @@ class Command(BaseCommand):
         with open(ingredients, encoding='utf-8') as file:
             reader = csv.reader(file)
             for row in reader:
-                ing, created = Ingredient.objects.get_or_create(
+                ingredient, created = Ingredient.objects.get_or_create(
                     name=row[0],
                     defaults={'measurement_unit': row[1]}
                 )

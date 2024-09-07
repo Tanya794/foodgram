@@ -11,7 +11,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', default='django-insecure-kw#%9!+#c0l!g9bj&=
 
 DEBUG = os.getenv('DEBUG') == 'True'
 
-BASE_URL = 'http://localhost:7007' if DEBUG else 'http://158.160.65.231:7007'
+BASE_URL = 'http://localhost:7777' if DEBUG else 'http://158.160.65.231:7007'
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '158.160.65.231,127.0.0.1,localhost').split(',')
 
@@ -132,8 +132,8 @@ DJOSER = {
     'USERNAME_FIELD': 'email',
 
     'SERIALIZERS': {
-        'token_create': 'users.serializers.TokenLoginSerializer',
-        'user': 'users.serializers.NewUserSerializer',
+        'token_create': 'api.serializers.TokenLoginSerializer',
+        'user': 'api.serializers.NewUserSerializer',
     },
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',

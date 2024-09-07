@@ -3,24 +3,74 @@ from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import NoReverseMatch, reverse
 from django_filters.rest_framework import DjangoFilterBackend
+from djoser.serializers import UserSerializer
+from djoser.views import UserViewSet
 from rest_framework import generics, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import (SAFE_METHODS, IsAuthenticated,
+from rest_framework.permissions import (AllowAny, SAFE_METHODS,
+                                        IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.filters import IngredientFilter, RecipeFilter
+from api.pagination import FoodgramPagination
 from api.permissions import ActionRestriction, IsAuthorOrStaff
 from api.serializers import (AvatarSerializer, FavoriteSerializer,
                              IngredientSerializer, RecipeIWriteSerializer,
                              RecipeReadSerializer, ShoppingCartSerializer,
-                             SubscribeActionSerializer, TagSerializer)
+                             SubscribeActionSerializer, TagSerializer,
+                             NewUserSerializer, UserCreateSerializer)
 from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
 from recipes.renderers import PlainTextRenderer
 from users.models import Subscription
 
+
 User = get_user_model()
+
+
+class NewUserViewSet(UserViewSet):
+    """Переопределяет вьюсет пользователя от djoser."""
+
+    serializer_class = NewUserSerializer
+    permission_classes = (ActionRestriction, IsAuthenticated)
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({'request': self.request})
+        return context
+
+    def retrieve(self, request, *args, **kwargs):
+        user = request.user
+        instance = get_object_or_404(self.get_queryset(), pk=user.id)
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+
+class UserGetViewSet(viewsets.ViewSet):
+    """Предоставляет просмотр и создание юзера(ов)."""
+
+    permission_classes = (AllowAny,)
+
+    def list(self, request):
+        queryset = User.objects.order_by('id')
+        paginator = FoodgramPagination()
+        paginated_queryset = paginator.paginate_queryset(queryset, request)
+        serializer = NewUserSerializer(paginated_queryset, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+    def retrieve(self, request, pk=None):
+        user = request.user
+        serializer = NewUserSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def create(self, request, *args, **kwargs):
+        serializer = UserCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        response_serializer = UserSerializer(user)
+        return Response(response_serializer.data,
+                        status=status.HTTP_201_CREATED)
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):

@@ -2,10 +2,12 @@ import uuid
 
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.core.validators import MinValueValidator
 
-from recipes.constants import (LENGTH_INGREDIENT, LENGTH_MESURE_UNIT,
-                               LENGTH_TAG, LENGTH_TO_DISPLAY,
-                               RECIPE_NAME_LENGTH, SHORT_LINK_LENGTH)
+from recipes.constants import (COOKING_TIME, LENGTH_INGREDIENT,
+                               LENGTH_MESURE_UNIT, LENGTH_TAG,
+                               LENGTH_TO_DISPLAY, RECIPE_NAME_LENGTH,
+                               SHORT_LINK_LENGTH)
 from recipes.validators import validate_slug
 
 User = get_user_model()
@@ -23,12 +25,15 @@ class Recipe(models.Model):
     text = models.TextField('Описание')
     ingredients = models.ManyToManyField('Ingredient',
                                          through='IngredientRecipe',
-                                         verbose_name='Ингредиенты')
+                                         verbose_name='Ингредиенты',
+                                         related_name='recipes')
     tags = models.ManyToManyField('Tag',
                                   through='TagRecipe',
-                                  verbose_name='Теги')
-    cooking_time = models.PositiveIntegerField(
-        'Время приготовления (в минутах)', blank=False
+                                  verbose_name='Теги',
+                                  related_name='recipes')
+    cooking_time = models.PositiveSmallIntegerField(
+        'Время приготовления (в минутах)', blank=False,
+        validators=[MinValueValidator(COOKING_TIME)]
     )
     pub_date = models.DateTimeField('Дата публикации', auto_now_add=True)
     short_link = models.CharField('Короткая ссылка',
@@ -79,7 +84,8 @@ class Ingredient(models.Model):
 
 class TagRecipe(models.Model):
     recipe = models.ForeignKey(Recipe, related_name='recipe_tags',
-                               on_delete=models.CASCADE)
+                               on_delete=models.CASCADE,
+                               verbose_name='Рецепт')
     tag = models.ForeignKey(Tag, related_name='tag_recipes',
                             on_delete=models.CASCADE,
                             verbose_name='Теги')
@@ -98,7 +104,8 @@ class TagRecipe(models.Model):
 
 class IngredientRecipe(models.Model):
     recipe = models.ForeignKey(Recipe, related_name='recipe_ingredients',
-                               on_delete=models.CASCADE)
+                               on_delete=models.CASCADE,
+                               verbose_name='Рецепт')
     ingredient = models.ForeignKey(Ingredient,
                                    related_name='ingredient_in_recipes',
                                    on_delete=models.CASCADE,
@@ -119,7 +126,8 @@ class IngredientRecipe(models.Model):
 
 class Favorite(models.Model):
     user = models.ForeignKey(User, related_name='favorites',
-                             on_delete=models.CASCADE)
+                             on_delete=models.CASCADE,
+                             verbose_name='Пользователи')
     recipe = models.ForeignKey(Recipe, related_name='favorited_by',
                                on_delete=models.CASCADE,
                                verbose_name='Рецепты')
@@ -138,7 +146,8 @@ class Favorite(models.Model):
 
 class ShoppingCart(models.Model):
     user = models.ForeignKey(User, related_name='in_cart',
-                             on_delete=models.CASCADE)
+                             on_delete=models.CASCADE,
+                             verbose_name='Пользователи')
     recipe = models.ForeignKey(Recipe, related_name='cart_users',
                                on_delete=models.CASCADE,
                                verbose_name='Рецепты')

@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 from recipes.models import Favorite, ShoppingCart
 from users.models import Subscription, User
@@ -23,7 +24,7 @@ class SubscriptionInline(admin.TabularInline):
 
 
 @admin.register(User)
-class UserAdmin(admin.ModelAdmin):
+class UserAdmin(BaseUserAdmin):
     list_display = ('username', 'first_name', 'last_name', 'email')
     search_fields = ('username', 'email')
     inlines = [SubscriptionInline, FavoriteInline, ShoppingCartInline]

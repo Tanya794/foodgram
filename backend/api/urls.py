@@ -4,8 +4,8 @@ from rest_framework.routers import DefaultRouter
 from api.views import (AvatarUpdateView, FavoriteViewSet, IngredientViewSet,
                        RecipeViewSet, ShoppingCartDownloadView,
                        ShoppingCartViewSet, SubscribeViewSet,
-                       SubscriptionListAPI, TagViewSet)
-from users.views import NewUserViewSet, UserGetViewSet
+                       SubscriptionListAPI, TagViewSet,
+                       NewUserViewSet, UserGetViewSet)
 
 app_name = 'api'
 
