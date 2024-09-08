@@ -22,7 +22,8 @@ from api.serializers import (AvatarSerializer, FavoriteSerializer,
                              RecipeReadSerializer, ShoppingCartSerializer,
                              SubscribeActionSerializer, TagSerializer,
                              NewUserSerializer, UserCreateSerializer)
-from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
+from recipes.models import (Favorite, Ingredient, IngredientRecipe,
+                            ShoppingCart, Recipe, Tag)
 from recipes.renderers import PlainTextRenderer
 from users.models import Subscription
 
@@ -100,32 +101,33 @@ class ShoppingCartDownloadView(APIView):
     permission_classes = (IsAuthenticated,)
 
     def get(self, request, format=None):
-        cart_items = ShoppingCart.objects.filter(user=request.user)
+        ingredients = IngredientRecipe.objects.filter(
+            recipe__cart_users__user=request.user
+        ).select_related('ingredient')
 
-        in_cart = {}
-
-        for item in cart_items:
-            recipe = item.recipe
-
-            ingredients = recipe.recipe_ingredients.all()
-
-            for ingredient in ingredients:
-                ingredient_name = ingredient.ingredient.name
-                measurement_unit = ingredient.ingredient.measurement_unit
-                amount = ingredient.amount
-
-                in_cart[(ingredient_name, measurement_unit)] = in_cart.get(
-                    (ingredient_name, measurement_unit), 0) + amount
-
-        cart = [f'{key[0]} - {value}({key[1]})' for key, value in
-                in_cart.items()]
-        content = '\n'.join(cart)
+        content = self.create_file(ingredients)
 
         response = Response(content)
         response['Content-Disposition'] = (
             'attachment; filename="products_list.txt"')
-
         return response
+
+    def create_file(self, ingredients):
+        """Создает содержимое файла на основе элементов корзины."""
+        in_cart = {}
+
+        for ingredient in ingredients:
+            ingredient_name = ingredient.ingredient.name
+            measurement_unit = ingredient.ingredient.measurement_unit
+            amount = ingredient.amount
+
+            in_cart[(ingredient_name, measurement_unit)] = in_cart.get(
+                (ingredient_name, measurement_unit), 0) + amount
+
+        cart = [f'{key[0]} - {value}({key[1]})' for key, value in
+                in_cart.items()]
+        content = '\n'.join(cart)
+        return content
 
 
 class ReturnShortLinkRecipeAPI(APIView):
@@ -135,8 +137,7 @@ class ReturnShortLinkRecipeAPI(APIView):
 
     def get(self, request, short_link):
         recipe = get_object_or_404(Recipe, short_link=short_link)
-        recipe_id = recipe.id
-        recipe_url = f'{settings.BASE_URL}/recipes/{recipe_id}/'
+        recipe_url = f'{settings.BASE_URL}/recipes/{recipe.id}/'
         return redirect(recipe_url)
 
 
@@ -248,7 +249,7 @@ class SubscriptionListAPI(generics.ListAPIView):
 
     def get_queryset(self):
         current_user = self.request.user
-        return current_user.subscriptions.all().order_by('id')
+        return current_user.subscriptions.order_by('id')
 
 
 class SubscribeViewSet(viewsets.ViewSet):
@@ -258,7 +259,6 @@ class SubscribeViewSet(viewsets.ViewSet):
 
     def create(self, request, user_id):
         subscrited_to = get_object_or_404(User, id=user_id)
-        print(f'{subscrited_to}')
         serializer = SubscribeActionSerializer(
             data={'subscribed_to': subscrited_to.id},
             context={'request': request}
@@ -291,20 +291,17 @@ class AvatarUpdateView(generics.UpdateAPIView):
     serializer_class = AvatarSerializer
     permission_classes = (IsAuthenticated,)
 
-    def get_object(self):
-        return self.request.user
-
     def put(self, request, *args, **kwargs):
-        user = self.get_object()
+        user = request.user
         serializer = self.get_serializer(user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def delete(self, request, *args, **kwargs):
-        user = self.get_object()
+        user = request.user
         if user.avatar:
-            user.avatar.delete(save=False)
+            user.avatar.delete()
             user.avatar = None
-            user.save()
+            user.save(update_fields=['avatar'])
         return Response(status=status.HTTP_204_NO_CONTENT)
