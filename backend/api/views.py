@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.db.models import Exists, OuterRef
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import NoReverseMatch, reverse
 from django_filters.rest_framework import DjangoFilterBackend
@@ -42,8 +43,7 @@ class NewUserViewSet(UserViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         user = request.user
-        instance = get_object_or_404(self.get_queryset(), pk=user.id)
-        serializer = self.get_serializer(instance)
+        serializer = self.get_serializer(user)
         return Response(serializer.data)
 
 
@@ -60,7 +60,7 @@ class UserGetViewSet(viewsets.ViewSet):
         return paginator.get_paginated_response(serializer.data)
 
     def retrieve(self, request, pk=None):
-        user = request.user
+        user = get_object_or_404(User, pk=pk)
         serializer = NewUserSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -143,11 +143,21 @@ class ReturnShortLinkRecipeAPI(APIView):
 class RecipeViewSet(viewsets.ModelViewSet):
     """CRUD для модели Recipe."""
 
-    queryset = Recipe.objects.prefetch_related(
-        'ingredients', 'tags').select_related('author')
     permission_classes = (IsAuthorOrStaff,)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
+
+    def get_queryset(self):
+        user = self.request.user if self.request.user.is_authenticated \
+            else None
+        return Recipe.objects.prefetch_related(
+            'ingredients', 'tags'
+        ).select_related('author').annotate(
+            is_favorited=Exists(Favorite.objects.filter(
+                user=user, recipe=OuterRef('pk'))),
+            is_in_shopping_cart=Exists(ShoppingCart.objects.filter(
+                user=user, recipe=OuterRef('pk')))
+        )
 
     @action(detail=True, methods=['get'], url_path='get-link')
     def get_link(self, request, pk=None):

@@ -8,9 +8,6 @@ from api.views import ReturnShortLinkRecipeAPI
 urlpatterns = [
     path('api/', include('api.urls')),
     path('admin/', admin.site.urls),
-    path('api/auth/', include('djoser.urls.authtoken')),
-    path('api/', include('djoser.urls')),
-
     path('s/<str:short_link>/', ReturnShortLinkRecipeAPI.as_view(),
          name='recipe-short-link'),
 ]
