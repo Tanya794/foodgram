@@ -3,7 +3,7 @@ import base64
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
-from django.db.models import Count, Exists, OuterRef
+from django.db.models import Count, Exists
 from djoser.serializers import TokenCreateSerializer, UserSerializer
 from rest_framework import serializers
 
