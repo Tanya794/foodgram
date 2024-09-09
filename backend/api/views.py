@@ -25,7 +25,7 @@ from api.serializers import (AvatarSerializer, FavoriteSerializer,
                              UserCreateSerializer)
 from recipes.models import (Favorite, Ingredient, IngredientRecipe, Recipe,
                             ShoppingCart, Tag)
-from recipes.renderers import PlainTextRenderer
+from api.renderers import PlainTextRenderer
 from users.models import Subscription
 
 User = get_user_model()
@@ -98,7 +98,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 class ShoppingCartDownloadView(APIView):
     """Скачивание списка покупок."""
 
-    renderer_classes = [PlainTextRenderer]
+    renderer_classes = (PlainTextRenderer,)
     permission_classes = (IsAuthenticated,)
 
     def get(self, request, format=None):
@@ -348,6 +348,4 @@ class AvatarUpdateView(generics.UpdateAPIView):
         user = request.user
         if user.avatar:
             user.avatar.delete()
-            user.avatar = None
-            user.save(update_fields=["avatar"])
         return Response(status=status.HTTP_204_NO_CONTENT)

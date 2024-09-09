@@ -6,8 +6,8 @@ from django.db import models
 
 from recipes.constants import (COOKING_TIME, LENGTH_INGREDIENT,
                                LENGTH_MESURE_UNIT, LENGTH_TAG,
-                               LENGTH_TO_DISPLAY, RECIPE_NAME_LENGTH,
-                               SHORT_LINK_LENGTH)
+                               LENGTH_TO_DISPLAY, MIN_AMOUNT,
+                               RECIPE_NAME_LENGTH, SHORT_LINK_LENGTH)
 from recipes.validators import validate_slug
 
 User = get_user_model()
@@ -130,7 +130,10 @@ class IngredientRecipe(models.Model):
         on_delete=models.CASCADE,
         verbose_name="Ингредиент",
     )
-    amount = models.PositiveIntegerField("Количество")
+    amount = models.PositiveSmallIntegerField(
+        "Количество",
+        validators=[MinValueValidator(MIN_AMOUNT)],
+    )
 
     class Meta:
         verbose_name = "Ингредиент"

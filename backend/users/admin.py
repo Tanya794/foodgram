@@ -27,4 +27,4 @@ class SubscriptionInline(admin.TabularInline):
 class UserAdmin(BaseUserAdmin):
     list_display = ("username", "first_name", "last_name", "email")
     search_fields = ("username", "email")
-    inlines = [SubscriptionInline, FavoriteInline, ShoppingCartInline]
+    inlines = (SubscriptionInline, FavoriteInline, ShoppingCartInline)
