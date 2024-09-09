@@ -3,6 +3,7 @@ import base64
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
+from django.db.models import Count, Exists, OuterRef
 from djoser.serializers import TokenCreateSerializer, UserSerializer
 from rest_framework import serializers
 
@@ -320,24 +321,14 @@ class FavoriteSerializer(serializers.ModelSerializer):
 class SubscriptionSerializer(serializers.ModelSerializer):
     """Сериализатор для отображения подписок."""
 
-    is_subscribed = serializers.SerializerMethodField()
+    is_subscribed = serializers.BooleanField()
     recipes = RecipeRepresentation(many=True)
-    recipes_count = serializers.SerializerMethodField()
+    recipes_count = serializers.IntegerField()
 
     class Meta:
         model = User
         fields = ('email', 'id', 'username', 'first_name', 'last_name',
                   'is_subscribed', 'recipes', 'recipes_count', 'avatar')
-
-    def get_is_subscribed(self, obj):
-        current_user = self.context.get('current_user')
-        if current_user and current_user.is_authenticated:
-            return Subscription.objects.filter(user=current_user,
-                                               subscribed_to=obj).exists()
-        return False
-
-    def get_recipes_count(self, obj):
-        return Recipe.objects.filter(author=obj).count()
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -369,7 +360,14 @@ class SubscribeActionSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         subscribed_to = instance.subscribed_to
         context = {'current_user': instance.user}
-        serializer = SubscriptionSerializer(subscribed_to,
+        user_with_count = User.objects.annotate(
+            recipes_count=Count('recipes'),
+            is_subscribed=Exists(
+                Subscription.objects.filter(
+                    user=context['current_user'],
+                    subscribed_to=subscribed_to
+                ))).get(id=subscribed_to.id)
+        serializer = SubscriptionSerializer(user_with_count,
                                             context=context)
         return serializer.data
 
