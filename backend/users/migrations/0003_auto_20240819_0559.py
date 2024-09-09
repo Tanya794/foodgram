@@ -6,20 +6,24 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('users', '0002_alter_user_username'),
+        ("users", "0002_alter_user_username"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='subscription',
-            name='subscribed_to',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='subscribers', to=settings.AUTH_USER_MODEL, verbose_name='Подписан на'),
+            model_name="subscription",
+            name="subscribed_to",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="subscribers",
+                to=settings.AUTH_USER_MODEL,
+                verbose_name="Подписан на",
+            ),
         ),
         migrations.AlterField(
-            model_name='user',
-            name='avatar',
-            field=models.ImageField(blank=True, null=True, upload_to='users/'),
+            model_name="user",
+            name="avatar",
+            field=models.ImageField(blank=True, null=True, upload_to="users/"),
         ),
     ]

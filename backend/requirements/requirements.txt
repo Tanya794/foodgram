@@ -7,3 +7,4 @@ psycopg2-binary==2.9.3
 python-dotenv==1.0.1
 gunicorn==20.1.0
 isort==5.13.2
+black==23.3.0
