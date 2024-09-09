@@ -17,6 +17,7 @@ from rest_framework.views import APIView
 from api.filters import IngredientFilter, RecipeFilter
 from api.pagination import FoodgramPagination
 from api.permissions import ActionRestriction, IsAuthorOrStaff
+from api.renderers import PlainTextRenderer
 from api.serializers import (AvatarSerializer, FavoriteSerializer,
                              IngredientSerializer, NewUserSerializer,
                              RecipeIWriteSerializer, RecipeReadSerializer,
@@ -25,7 +26,6 @@ from api.serializers import (AvatarSerializer, FavoriteSerializer,
                              UserCreateSerializer)
 from recipes.models import (Favorite, Ingredient, IngredientRecipe, Recipe,
                             ShoppingCart, Tag)
-from api.renderers import PlainTextRenderer
 from users.models import Subscription
 
 User = get_user_model()
